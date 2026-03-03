@@ -85,7 +85,7 @@ We analyzed diverse title lifecycles, contrasting "Product A" (high volatility, 
 
 | Title A: Sparsity and Trends | Title B: Predictable Stability |
 | --- | --- |
-| **[INSERT VISUALIZATION 1 HERE e.g., `sparsely_populated_title.png`]** | **[INSERT VISUALIZATION 2 HERE e.g., `stable_title.png`]** |
+| ![Figure 2: Raw vs. Resampled Weekly Sales](unknown-23.png) | ![Figure 3: Figure 3: Raw vs. Resampled Weekly Sales](unknown-24.png) |
 | *Figure 2: Raw vs. Resampled Weekly Sales. Note how Product A has significant 'zero sales' gaps that must be correctly modeled.* | *Figure 3: Raw vs. Resampled Weekly Sales. Product B displays clear, powerful annual seasonality.* |
 
 ### 2. Time Series Decomposition (The Statistical Baseline)
@@ -94,7 +94,7 @@ We used decomposition to isolate the underlying trend and 52-week seasonality th
 
 | Title Decomposition Plot | ACF/PACF Analysis |
 | --- | --- |
-| **[INSERT VISUALIZATION 3 HERE e.g., `decomposition_plot.png`]** | **[INSERT VISUALIZATION 4 HERE e.g., `acf_pacf.png`]** |
+| ![Figure 4: STL decomposition](Unknown-17.png) | ![Figure 5: Autocorrelation plots](Unknown-18.png) |
 | *Figure 4: STL decomposition showing Trend, Seasonality, and Residuals for Product B.* | *Figure 5: Autocorrelation plots used to select appropriate lags for the baseline model.* |
 
 ### 3. Deep Learning Training Optimization
