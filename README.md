@@ -1,145 +1,143 @@
-# Using Time Series Multi-Model Network for Next-Generation Sales & Demand Forecasting
+# Sales & Demand Forecasting — Hybrid SARIMA-LSTM Ensemble
 
-## Optimizing Retail Supply Chains with Advanced Analytics
+> **Built a production-grade parallel hybrid SARIMA-LSTM forecasting engine for retail book sales using Nielsen BookScan data (2012–2024). Best model achieved 18.94% MAPE — beating standalone LSTM (24.9%) and XGBoost (29.6%) on volatile weekly demand signals.**
 
-> **Confidentiality Notice:** This project was conducted under a strict Non-Disclosure Agreement (NDA). All client identification, specific product titles, and raw performance metrics have been masked or generalized (e.g., using "Product A" instead of specific names, and normalizing data scales). This portfolio project focuses on showcasing the *analytical methodologies, complex modeling roadmaps, and strategic business insights* generated for the client.
-
----
-
-### Project Overview & Executive Teaser
-
-This project solved a critical forecasting challenge for a **Global Media Measurement Firm**. The goal was to empower their specialist publisher partners—who often operate with lean inventory—with data-driven foresight. We transformed volatile, sparse weekly transactional data into actionable 8-month demand forecasts.
-
-By developing a novel multi-stage analytical roadmap, transitioning from classical statistical models to complex deep learning hybrids, we delivered high-precision forecasting capability.
-
-#### Key Project Visual Summary (The 'Wow' Factor)
-
-This poster summarizes the entire project lifecycle, from raw data complexity to the final hybrid model performance and business impact.
-
-| Project Infographic Teaser |
-| --- |
-| **[![alt text](https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png "High-level overview of the demand forecasting methodology and key comparative results")]** |
-| *Figure 1: High-level overview of the demand forecasting methodology and key comparative results.* |
+![Python](https://img.shields.io/badge/Python-3.10-blue?logo=python&logoColor=white)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-Keras-orange?logo=tensorflow&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3-blue?logo=scikit-learn&logoColor=white)
+![pmdarima](https://img.shields.io/badge/pmdarima-AutoARIMA-green)
+![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
 ---
 
-## Table of Contents
+## Business Problem
 
-1. [The Business Challenge](https://www.google.com/search?q=%23the-business-challenge)
-2. [The Data: From Noise to Signals](https://www.google.com/search?q=%23the-data-from-noise-to-signals)
-3. [Analytical Roadmap: Step-by-Step Modeling](https://www.google.com/search?q=%23analytical-roadmap-step-by-step-modeling)
-4. [Visual Analysis & Performance Comparison](https://www.google.com/search?q=%23visual-analysis--performance-comparison)
-5. [Client Insights & Business Impact](https://www.google.com/search?q=%23client-insights--business-impact)
-6. [Tools & Technologies](https://www.google.com/search?q=%23tools--technologies)
+**Nielsen BookScan** — the world's largest book sales tracking service — wants to offer small/medium publishers a forecasting tool for data-driven procurement and inventory management. The challenge: predict weekly sales 32 weeks ahead for titles with strong seasonality but volatile demand spikes, enabling optimised stock control and reprint planning.
 
----
-
-## The Business Challenge
-
-Our client required a robust forecasting service for its independent publisher partners. These publishers needed to optimize investment, manage warehouse costs, and make critical data-driven reprint decisions. The objective was to predict the demand profile and economic lifespan of specific titles, forecasting 32 weeks (weekly granularity) and 8 months (monthly granularity) into the future. The primary metrics for success were reducing forecast error (MAE/MAPE).
+Two enduring titles were selected as representative case studies:
+- **The Alchemist** — volatile, event-driven demand with irregular spikes
+- **The Very Hungry Caterpillar** — stable, highly seasonal (Christmas-driven) with predictable annual patterns
 
 ---
 
-## The Data: From Noise to Signals
+## Architecture & Approach
 
-The raw data consisted of transactional sales records for numerous book titles. The primary challenge was **sparsity**: sales are only recorded when they occur, leaving large gaps. To build robust models, significant preprocessing was required:
+```text
+                    ┌─────────────┐
+                    │  Raw Weekly  │
+                    │  Sales Data  │
+                    └──────┬──────┘
+                           │
+                    ┌──────▼──────┐
+                    │   Preprocess │  Resample to regular weekly frequency
+                    │   & Engineer │  Fill zero-sale weeks, lag features
+                    └──────┬──────┘
+                           │
+          ┌────────────────┼────────────────┐
+          │                │                │
+   ┌──────▼──────┐ ┌──────▼──────┐ ┌───────▼──────┐
+   │   SARIMA    │ │   XGBoost   │ │    LSTM      │
+   │  (m=52)     │ │  (lag grid) │ │ (KerasTuner) │
+   └──────┬──────┘ └──────┬──────┘ └───────┬──────┘
+          │                │                │
+          └───────┬────────┘                │
+                  │                         │
+          ┌───────▼─────────────────────────▼──┐
+          │         Hybrid Ensembles            │
+          │  Sequential: SARIMA + LSTM residual │
+          │  Parallel:   Weighted average       │
+          └─────────────────────────────────────┘
+```
 
-1. **Normalization & Merging:** Consolidating disparate data sheets and standardized identifiers (masked ISBNs).
-2. **Regularization:** Resampling the time series to a strict weekly and monthly frequency, explicitly filling missing sales periods with zero to reflect true demand volatility.
-3. **Stationarity Testing:** Implemented Augmented Dickey-Fuller (ADF) tests to confirm the stationarity of the processed series, a requirement for classical statistical modeling.
-
----
-
-## Analytical Roadmap: Step-by-Step Modeling
-
-We didn't just apply one model; we built a sophisticated ladder of complexity to find the optimal solution.
-
-### Step 1: Statistical Benchmarking (SARIMA)
-
-We established a robust baseline using Seasonal AutoRegressive Integrated Moving Average (SARIMA) models. This allowed us to explicitly decompose the series and understand fundamental components like trend and annual seasonality ($m=52$ for weekly).
-
-### Step 2: Machine Learning Regression (XGBoost)
-
-We transitioned to a supervised learning approach using XGBoost. This required significant feature engineering, specifically developing optimized lag features (ranging from 4-week to 52-week windows depending on the product stability) through cross-validated grid searching.
-
-### Step 3: Deep Learning (LSTM Networks)
-
-We built a complex Long Short-Term Memory (LSTM) recurrent neural network. This deep learning approach was designed to capture intricate, non-linear dependencies in the data that statistical models miss. We used MinMaxScaler for data preparation and KerasTuner to automate hyperparameter optimization (units, dropout, learning rate).
-
-### Step 4: Final Innovation: The Hybrid Solution
-
-Our final capability breakthrough came from realizing that statistical models excel at linear trends, while deep learning excels at non-linear residuals. We implemented two hybrid architectures:
-
-* **Sequential Hybrid:** SARIMA models the main linear trend $\rightarrow$ LSTM is trained *only* on the remaining residuals.
-* **Parallel Hybrid (Winner):** Standalone SARIMA and LSTM forecasts are generated simultaneously and combined using a **weighted average** optimized via grid search.
-
----
-
-## Visual Analysis & Performance Comparison
-
-*This section showcases the data science process. The visualizations below highlight the specific capabilities implemented.*
-
-### 1. Understanding Product Diversity (Sparsity vs. Stability)
-
-We analyzed diverse title lifecycles, contrasting "Product A" (high volatility, trend-driven) with "Product B" (extreme stability, highly predictable seasonality). The initial visualization confirms why simple averaging is insufficient.
-
-| Title A: Sparsity and Trends | Title B: Predictable Stability |
-| --- | --- |
-| ![Figure 2: Raw vs. Resampled Weekly Sales](unknown-23.png) | ![Figure 3: Figure 3: Raw vs. Resampled Weekly Sales](unknown-24.png) |
-| *Figure 2: Raw vs. Resampled Weekly Sales. Note how Product A has significant 'zero sales' gaps that must be correctly modeled.* | *Figure 3: Raw vs. Resampled Weekly Sales. Product B displays clear, powerful annual seasonality.* |
-
-### 2. Time Series Decomposition (The Statistical Baseline)
-
-We used decomposition to isolate the underlying trend and 52-week seasonality that drives stable titles. This confirmed that statistical modeling was mandatory.
-
-| Title Decomposition Plot | ACF/PACF Analysis |
-| --- | --- |
-| ![Figure 4: STL decomposition](Unknown-17.png) | ![Figure 5: Autocorrelation plots](Unknown-18.png) |
-| *Figure 4: STL decomposition showing Trend, Seasonality, and Residuals for Product B.* | *Figure 5: Autocorrelation plots used to select appropriate lags for the baseline model.* |
-
-### 3. Deep Learning Training Optimization
-
-For the LSTM model, we optimized complexity. The visualizations below demonstrate our process of avoiding overfitting (model loss smoothing) and automating parameter selection.
-
-| LSTM Training History (Loss) | Hyperparameter Optimization |
-| --- | --- |
-| **[INSERT VISUALIZATION 5 HERE e.g., `lstm_loss_plot.png`]** | **[INSERT VISUALIZATION 6 HERE e.g., `kerastuner_summary.png`]** |
-| *Figure 6: Model loss curve showing convergence and effective early stopping to prevent overfitting.* | *Figure 7: Example summary showing the automated search for optimal LSTM architecture.* |
-
-### 4. Final Comparative Model Performance (MAE & MAPE)
-
-*This is the definitive result chart. The Hybrid Parallel model proved significantly superior to standalone approaches by intelligently weighting the strengths of statistical (80%) and deep learning (20%) components.*
-
-| Comparison of Weekly Forecasting Models | Comparison of Monthly Forecasting Models |
-| --- | --- |
-| **[INSERT VISUALIZATION 7 HERE e.g., `weekly_model_comparison_bar_chart.png`]** | **[INSERT VISUALIZATION 8 HERE e.g., `monthly_model_comparison_bar_chart.png`]** |
-| *Figure 8: Performance comparison (Masked MAE) across different weekly models. The Hybrid Parallel (Far Right) achieved the lowest error floor.* | *Figure 9: Monthly aggregation significantly smoothed noise, making Monthly SARIMA highly accurate for stable titles.* |
+### Models Implemented
+1. **Auto ARIMA (SARIMA)** — seasonal period m=52, ADF-confirmed stationarity  
+2. **XGBoost Regressor** — grid-searched lag window (4-week & 52-week optimal)  
+3. **LSTM Neural Network** — 12-week lookback, KerasTuner hyperparameter optimisation (units, dropout, learning rate)  
+4. **Sequential Hybrid** — SARIMA baseline + LSTM trained on SARIMA residuals  
+5. **Parallel Hybrid** — weighted ensemble of standalone SARIMA & LSTM forecasts (grid-searched optimal weights)  
+6. **Monthly Aggregation** — SARIMA & XGBoost on monthly-resampled data (8-month horizon)  
 
 ---
 
-## Client Insights & Business Impact
+## Results
 
-This advanced analytics roadmap delivered more than just accuracy metrics; it provided strategic clarity for the client's publisher partners.
+### Weekly Forecasting (32-week horizon)
 
-### Core Analytical Insights for Clients
+| Model | The Alchemist (MAPE) | The Very Hungry Caterpillar (MAPE) |
+|---|---|---|
+| **Parallel Hybrid (SARIMA+LSTM)** | **23.24%** | **18.94%** ✅ |
+| Sequential Hybrid | 23.29% | 21.47% |
+| XGBoost | 23.38% | 29.56% |
+| SARIMA (monthly) | 32.87% | 19.33% |
+| XGBoost (monthly) | 48.07% | 30.23% |
+| LSTM (standalone) | 53.31% | 24.94% |
 
-1. **Linear Dominance:** For standard book sales, linearity and annual seasonality are the fundamental drivers. Our best hybrid model assigned 70–80% of the forecasting weight to the statistical SARIMA component. Complex LSTM models act as powerful, minor *adjustments* rather than primary engines.
-2. **Aggregation Strategy Saves Cost:** Aggregating sparse weekly data into monthly granularity (e.g., for 'Product B') delivered **19.33% MAPE** with extremely low computational cost. Publishers can use monthly models for strategic reprint planning (8-month horizon) and weekly models for immediate warehouse stock management.
-3. **The Overfitting Trap in Short Sequences:** Our standalone LSTM model struggled with volatile titles (53% error floor) because its 12-week 'tunnel vision' failed to capture the vital 52-week annual seasonality. Hybrid models solve this by anchoring the deep learning network to a stable statistical trend.
-
-### Client Impact: Data-Driven Success
-
-* **Minimized Stockouts & Overstock:** Publishers can tune inventory levels against specific 32-week demand windows, reducing wastage and missed sales.
-* **Optimal Reprint Timing:** High-precision monthly forecasting empowers publishers to decide when and how many units to reprint for an 8-month horizon.
-* **Informed SKU Management:** The distinct performance difference between Product A (volatile) and Product B (stable) provides a framework for publishers to classify their portfolios by risk and predictability.
+### Optimal Parallel Weights
+- The Alchemist: **0.8 SARIMA / 0.2 LSTM**
+- The Very Hungry Caterpillar: **0.7 SARIMA / 0.3 LSTM**
 
 ---
 
-## Tools & Technologies
+## Key Findings
 
-* **Python:** The core language for development.
-* **Data Manipulation:** Pandas, NumPy.
-* **Statistical Modeling:** statsmodels (SARIMA, ADF Testing), scipy.
-* **Machine Learning:** XGBoost, Scikit-learn (GridSearchCV).
-* **Deep Learning:** TensorFlow, Keras, KerasTuner (Hyperparameter tuning).
-* **Visualization:** Matplotlib, Seaborn.
+1. **Linear patterns dominate book sales.** SARIMA weights of 0.7–0.8 in the best model confirm that annual seasonality and trend are the primary drivers. Deep learning serves as a complementary adjustment, not the forecasting engine.
+
+2. **Standalone LSTM fails on sparse, seasonal data.** The 12-week lookback creates "tunnel vision" — missing the 52-week annual cycle entirely. With only ~600 weekly observations, LSTM overfits short-term noise.
+
+3. **Monthly aggregation smooths volatile titles effectively.** For The Very Hungry Caterpillar, monthly SARIMA (19.33% MAPE) nearly matches the best weekly model — with far less computational overhead.
+
+4. **Volatile titles need exogenous variables to break the error floor.** The Alchemist's ~23% MAPE floor across all models suggests that external factors (media mentions, price promotions) must be integrated for further improvement.
+
+---
+
+## Project Structure
+
+```text
+├── nielsen_timeseries_forecasting.ipynb   # Full analysis notebook
+├── GAO_YULIANG_CAM_C301_9-10_Report.pdf  # Written report (800-1000 words)
+├── requirements.txt                        # Dependencies
+├── README.md                               # This file
+└── data/                                   # Data loaded from Google Drive at runtime
+```
+
+---
+
+## Quick Start
+
+```bash
+pip install -r requirements.txt
+jupyter notebook nielsen_timeseries_forecasting.ipynb
+```
+
+### requirements.txt
+
+```text
+pandas>=2.0
+numpy>=1.24
+matplotlib>=3.7
+seaborn>=0.12
+statsmodels>=0.14
+pmdarima>=2.0
+scikit-learn>=1.3
+xgboost>=2.0
+tensorflow>=2.15
+keras-tuner>=1.4
+gdown>=5.0
+```
+
+---
+
+## Technical Details
+
+- **Data:** Nielsen BookScan UK weekly sales data (2000–2024), filtered to post-2012 for model training  
+- **Preprocessing:** ISBN string conversion, datetime indexing, weekly resampling with zero-fill for missing weeks  
+- **Stationarity:** Confirmed via Augmented Dickey-Fuller test for both titles  
+- **Decomposition:** Additive decomposition revealing trend, 52-week seasonal, and residual components  
+- **Evaluation Metrics:** Mean Absolute Error (MAE) and Mean Absolute Percentage Error (MAPE) on held-out final 32 weeks  
+- **Hyperparameter Tuning:** KerasTuner (LSTM), GridSearchCV (XGBoost), Auto ARIMA parameter bounds  
+
+---
+
+## About
+
+This project was completed as part of the **University of Cambridge Certificate in Data Science with Machine Learning** (Module C301, Topic 9.1). Analysis and modelling by [Yuliang Raffael Gao](https://linkedin.com/in/raffaelyg/).
